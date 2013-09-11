@@ -17,14 +17,14 @@ Usage
 	>aatt.setDevice("1");
 
 4. Add Activity & Data
-	- For adding records, you set the activity to RECORD and call the record method on your aatt object.  Pass the endpoint ID and the value as parameters.
+	1. For adding records, you set the activity to RECORD and call the record method on your aatt object.  Pass the endpoint ID and the value as parameters.
 		>aatt.setAct("RECORD")
 		>aatt.record("1","42")
 		>aatt.record("2","86")
 		>aatt.record("3","-10")
 		>aatt.record("4","0")
 
-	- For checking state of attributes, you set the activity to CHECK and call the check method.  Pass the endpoint ID and the attribute ID as parameter.
+	2. For checking state of attributes, you set the activity to CHECK and call the check method.  Pass the endpoint ID and the attribute ID as parameter.
 		>aatt.setAct("CHECK")
 		>aatt.check("1","1")
 		>aatt.check("1","2")
