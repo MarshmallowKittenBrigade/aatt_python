@@ -1,14 +1,18 @@
 #!/usr/bin/python
 
-import json
-import requests
+import json, sys, requests
+from twisted.python import log
+from twisted.internet import ssl, reactor
+from twisted.internet.protocol import ClientFactory, Protocol
+from twisted.protocols.basic import LineReceiver
 
 class Aatt:
 	"""
 	Automate All The Things Python Module
 	"""
 	def __init__(self):
-		self.aattUrl = 'https://jarvis.marshmallowkittens.org/sync/'
+		self.aattUrl = ''
+		self.port = 8421
 		self.auth = {}
 		self.data = {}
 		self.post = {}
@@ -18,11 +22,12 @@ class Aatt:
 		self.actions = {}
 		self.status = ''
 		
-	def setSyncUrl(self,url):
+	def setSyncUrl(self,url,port):
 		"""
 		This is used to change the sync url.  It can also be set by hand in the aatt_python.py file.
 		"""
 		self.aattUrl = url
+		self.port = port
 
 	def setAccount(self,acctId,acctKey):
 		"""
@@ -90,9 +95,34 @@ class Aatt:
 		if self.status != 'BADACT':
 			self.compile()
 			payload = json.dumps(self.post)
-			header = {'content-type': 'application/json','User-Agent':'aatt Python'}
-			r = requests.post(self.aattUrl,data=payload,headers=header,verify=True)
-			return r.content
+			factory = AattClientFactory(payload)
+			reactor.connectTCP(self.aattUrl,self.port, factory)
+			reactor.run()
+			return factory.response()
 		else:
 			return self.status
 		
+
+class AattClient(LineReceiver):
+	def connectionMade(self):
+		self.sendLine(self.factory.payload)
+
+	def lineReceived(self,data):
+		self.factory.data = data
+		self.transport.loseConnection()
+
+class AattClientFactory(ClientFactory):
+	protocol = AattClient
+
+	def __init__(self,payload):
+		self.data = {}
+		self.payload = payload
+
+	def clientConnectionFailed(self, connector, reason):
+		reactor.stop()
+
+	def clientConnectionLost(self, connector, reason):
+		reactor.stop()
+
+	def response(self):
+		return self.data
