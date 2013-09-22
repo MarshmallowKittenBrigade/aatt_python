@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import json, sys, requests
+import json, sys
 from twisted.python import log
 from twisted.internet import ssl, reactor
 from twisted.internet.protocol import ClientFactory, Protocol
