@@ -1,10 +1,6 @@
 #!/usr/bin/python
 
-import json, sys
-from twisted.python import log
-from twisted.internet import ssl, reactor
-from twisted.internet.protocol import ClientFactory, Protocol
-from twisted.protocols.basic import LineReceiver
+import json, sys, socket
 
 class Aatt:
 	"""
@@ -95,34 +91,22 @@ class Aatt:
 		if self.status != 'BADACT':
 			self.compile()
 			payload = json.dumps(self.post)
-			factory = AattClientFactory(payload)
-			reactor.connectTCP(self.aattUrl,self.port, factory)
-			reactor.run()
-			return factory.response()
+			try:
+				sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			except socket.error, msg:
+				print 'Failed to create socket. Error code: %s , Error Message: %s ' % (msg)
+				sys.exit();
+			sock.settimeout(2)
+			ip = socket.gethostbyname(self.aattUrl)
+			try:
+				sock.connect((ip,self.port))
+			except Exception, e:
+				print e
+			sock.send(payload)
+			result = sock.recv(1024)
+			sock.close()
+			self.post['DATA'] = {}
+			self.post['AUTH'] = {}
+			return result
 		else:
 			return self.status
-		
-
-class AattClient(LineReceiver):
-	def connectionMade(self):
-		self.sendLine(self.factory.payload)
-
-	def lineReceived(self,data):
-		self.factory.data = data
-		self.transport.loseConnection()
-
-class AattClientFactory(ClientFactory):
-	protocol = AattClient
-
-	def __init__(self,payload):
-		self.data = {}
-		self.payload = payload
-
-	def clientConnectionFailed(self, connector, reason):
-		reactor.stop()
-
-	def clientConnectionLost(self, connector, reason):
-		reactor.stop()
-
-	def response(self):
-		return self.data
