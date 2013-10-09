@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import json, sys, socket
+import json, sys, socket, ssl, pprint
 
 class Aatt:
 	"""
@@ -15,7 +15,7 @@ class Aatt:
 		self.act = {}
 		self.records = {}
 		self.checks = {}
-		self.actions = {}
+		self.state = {}
 		self.status = ''
 		
 	def setSyncUrl(self,url,port):
@@ -39,9 +39,9 @@ class Aatt:
 
 	def setAct(self,act):
 		"""
-		Valid options for this method are RECORD, CHECK, ACTION, or REGISTER
+		Valid options for this method are RECORD, CHECK, SET, or UPDATE
 		"""
-		if act == 'RECORD' or act == 'CHECK' or act == 'ACTION' or act == 'REGISTER':
+		if act == 'RECORD' or act == 'CHECK' or act == 'SET' or act == "UPDATE":
 			self.act = act
 			self.post['ACT'] = act
 		else:
@@ -62,6 +62,13 @@ class Aatt:
 		else:
 			self.checks.update({endpoint:{attribute:attribute}})
 
+	def modify(self,attribute,value):
+		"""
+		Placeholder for the set method
+		"""
+		if attribute not in self.state.keys():
+			self.state[attribute] = value
+
 	def addAction(self,item,action):
 		"""
 		This method allows a device to set an action for another device.
@@ -77,10 +84,10 @@ class Aatt:
 			self.data.update({'RECORDS':self.records})
 		elif self.act is 'CHECK':
 			self.data.update({'CHECKS':self.checks})
-		elif self.act is 'ACTION':
-			self.data.update({'ACTION':self.actions})
-		elif self.act is 'REGISTER':
-			self.data.update({'REGISTER':self.register})
+		elif self.act is 'SET':
+			self.data.update({'CHANGES':self.state})
+		elif self.act is 'UPDATE':
+			self.data.update({'UPDATES':self.state})
 		self.post.update({'DATA':self.data})
 		return self.post
 
@@ -91,17 +98,17 @@ class Aatt:
 		if self.status != 'BADACT':
 			self.compile()
 			payload = json.dumps(self.post)
+			print payload
 			try:
 				sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
 			except socket.error, msg:
 				print 'Failed to create socket. Error code: %s , Error Message: %s ' % (msg)
 				sys.exit();
 			sock.settimeout(2)
 			ip = socket.gethostbyname(self.aattUrl)
-			try:
-				sock.connect((ip,self.port))
-			except Exception, e:
-				print e
+			
+			sock.connect((ip,self.port))
 			sock.send(payload)
 			result = sock.recv(1024)
 			sock.close()
