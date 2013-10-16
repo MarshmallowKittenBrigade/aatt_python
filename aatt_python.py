@@ -69,12 +69,6 @@ class Aatt:
 		if attribute not in self.state.keys():
 			self.state[attribute] = value
 
-	def addAction(self,item,action):
-		"""
-		This method allows a device to set an action for another device.
-		"""
-		self.actions.update({item:action})
-
 	def compile(self):
 		"""
 		This compiles all the various pieces into a properly formatted dict.  This does not need to be called separately from send.
